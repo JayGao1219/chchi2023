@@ -26,9 +26,9 @@ class HandTracker:
             if results.multi_hand_landmarks:
                 num_hands = len(results.multi_hand_landmarks)
 
-                for hand_landmarks in results.multi_hand_landmarks:
-                    mp.solutions.drawing_utils.draw_landmarks(
-                        image, hand_landmarks, mp.solutions.hands.HAND_CONNECTIONS)
+                for hand_landmarks in results.multi_hand_world_landmarks:
+                    # mp.solutions.drawing_utils.draw_landmarks(
+                        # image, hand_landmarks, mp.solutions.hands.HAND_CONNECTIONS)
 
                     self.calculate_speed_and_direction(image, hand_landmarks)
 
@@ -58,6 +58,7 @@ class HandTracker:
 
             avg_dx = sum(dx for dx, _ in displacements) / len(displacements)
             avg_dy = sum(dy for _, dy in displacements) / len(displacements)
+            print(avg_dx, avg_dy)
 
             speed = (avg_dx ** 2 + avg_dy ** 2) ** 0.5
 
@@ -65,13 +66,13 @@ class HandTracker:
             angle_deg = math.degrees(angle)
             
             direction_text=""
-            if abs(dx)>0.03 and abs(dx)>abs(dy):
+            if abs(dx)>0.01 and abs(dx)>abs(dy):
                 if avg_dx < 0:
                     direction_text += "Left"
                 elif avg_dx > 0:
                     direction_text += "Right"
 
-            if abs(dy)>0.03 and abs(dy)>abs(dx):
+            if abs(dy)>0.01 and abs(dy)>abs(dx):
                 if avg_dy < 0:
                     direction_text += "Up"
                 elif avg_dy > 0:
