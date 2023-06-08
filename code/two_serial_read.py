@@ -1,20 +1,21 @@
 #!/usr/bin/python3
-
 import serial, time, sys, threading, multiprocessing
-import IMU, RAM, CAMERA
+import RAM, CAMERA
 
 import pprint
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.io import savemat
 import pprint
+import os
 
-if __name__ == "__main__":
-    print("in")
-    opt = IMU.parse_opt()
+def read_data(tot_time,file_root,index):
+    # 生成目录
+    file_root = file_root + str(index) + '/'
+    if not os.path.exists(file_root):
+        os.makedirs(file_root)
+    # 生成雷达数据路径
     manager = multiprocessing.Manager()
     
-    imudata = manager.list()
     frames = manager.list()
     timestamps_rdframes = manager.list()
     videoframe=manager.list()
@@ -23,34 +24,25 @@ if __name__ == "__main__":
     print(start)
     # Create two processes as follows
     try:
-        radar = multiprocessing.Process(target=RAM.radar_plot, args=(frames,start, timestamps_rdframes))
-        imu = multiprocessing.Process(target=IMU.receive_data, args=(opt, imudata, start))
-        video = multiprocessing.Process(target=CAMERA.get_video,args=(videoframe,start))
+        radar = multiprocessing.Process(target=RAM.radar_plot, args=(frames,start, timestamps_rdframes,tot_time))
+        video = multiprocessing.Process(target=CAMERA.get_video,args=(videoframe,start,tot_time,file_root))
       
         radar.start()
         print('RADAR process successfully started!')
         
-        imu.start()
-        print('IMU process successfully started!')
-
         video.start()
         print("Video process successfully started!")        
-       
-        # radar.join()
-        # imu.join()
        
     except:
         print("Error: unable to start thread")
 
     try:
-        # while True:      
-        #     pass
-        time.sleep(10)
-        print(len(imudata), len(frames))
-        print("imu,radar data saved!")
-        mdict = {"imu_data": np.array(imudata), "radar_frames":np.array(frames), "rdframe_timestamp":np.array(timestamps_rdframes)}
-        # mdict = {"imu_data": list(imudata), "radar_frames":list(frames)}
-        savemat("test1.mat", mdict)
+        # Wait for processes to finish
+        print("save radar and time data")
+        # 视频数据在函数中储存
+        np.save(file_root+'radar_frames.npy',np.array(frames))
+        np.save(file_root+'rdframe_timestamp.npy',np.array(timestamps_rdframes))
         
     except KeyboardInterrupt:
         exit()
+
