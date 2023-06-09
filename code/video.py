@@ -1,36 +1,38 @@
+# Description: This file contains the code for the video annotation
 import cv2
 import mediapipe as mp
 import math
+from collections import deque
 
 class HandTracker:
-    def __init__(self):
+    def __init__(self,video_path,n_len=20):
         self.mp_hands = mp.solutions.hands.Hands()
-        self.prev_landmarks = None
+        self.video_path = video_path
+        self.landmarks = deque(maxlen=self.n_len)
 
     def start_tracking(self):
-        cap = cv2.VideoCapture(0)
+        # cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(self.video_path)
 
-        while True:
+        while cap.isOpened():
             success, frame = cap.read()
 
             if not success:
-                print("无法读取摄像头帧")
+                print("无法读取视频帧")
                 break
 
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
             results = self.mp_hands.process(image)
 
             num_hands = 0
 
             if results.multi_hand_landmarks:
                 num_hands = len(results.multi_hand_landmarks)
-
-                for hand_landmarks in results.multi_hand_world_landmarks:
-                    # mp.solutions.drawing_utils.draw_landmarks(
-                        # image, hand_landmarks, mp.solutions.hands.HAND_CONNECTIONS)
-
-                    self.calculate_speed_and_direction(image, hand_landmarks)
+                if num_hands > 1:
+                    print("检测到多只手，只跟踪第一只手")
+                    self.landmarks.append(results.multi_hand_landmarks[0])
+                    # 写到这里，码一下
+                    self.calculate_speed_and_direction()
 
             cv2.putText(image, f"Hand Count: {num_hands}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
@@ -86,7 +88,14 @@ class HandTracker:
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         self.prev_landmarks = hand_landmarks.landmark
+    
 
-# Instantiate the HandTracker class and call the start_tracking() method to begin tracking
-hand_tracker = HandTracker()
-hand_tracker.start_tracking()
+if __name__ == "__main__":
+    # 替换为你要处理的视频文件名
+    video_file = "your_video.avi"
+    # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
+    hand_tracker = HandTracker(video_file)
+    hand_tracker.start_tracking()
+
+
+
