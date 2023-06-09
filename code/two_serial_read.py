@@ -1,14 +1,11 @@
 #!/usr/bin/python3
-import serial, time, sys, threading, multiprocessing
-import RAM, CAMERA
-
-import pprint
-import matplotlib.pyplot as plt
+import time, multiprocessing
 import numpy as np
-import pprint
 import os
 
-def read_data(tot_time,file_root,index):
+import RAM, CAMERA
+
+def real_time_data(tot_time,file_root,index):
     # 生成目录
     file_root = file_root + str(index) + '/'
     if not os.path.exists(file_root):
