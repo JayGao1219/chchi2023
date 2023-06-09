@@ -33,9 +33,6 @@ from internal.fft_spectrum import *
 
 import time
 
-# -------------------------------------------------
-# Main logic
-# -------------------------------------------------
 def radar_plot(frames, starttime, timestamps, tot_time, file_root):
 
     # 参考之前代码中的配置
