@@ -5,16 +5,27 @@ import math
 from collections import deque
 
 class HandTracker:
-    def __init__(self,video_path,n_len=20):
+    def __init__(self,video_path,result_path,n_len):
         self.mp_hands = mp.solutions.hands.Hands()
         self.video_path = video_path
-        self.landmarks = deque(maxlen=self.n_len)
+        self.landmarks = deque(maxlen=n_len)
+        self.result_path = result_path
 
     def start_tracking(self):
         # cap = cv2.VideoCapture(0)
         cap = cv2.VideoCapture(self.video_path)
+        # 获取原始视频的宽度、高度和帧率
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
 
+        # 创建新的视频写入对象
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        out = cv2.VideoWriter(self.result_path, fourcc, fps, (width, height))
+
+        tot=0
         while cap.isOpened():
+            tot+=1
             success, frame = cap.read()
 
             if not success:
@@ -30,37 +41,38 @@ class HandTracker:
                 num_hands = len(results.multi_hand_landmarks)
                 if num_hands > 1:
                     print("检测到多只手，只跟踪第一只手")
-                    self.landmarks.append(results.multi_hand_landmarks[0])
-                    # 写到这里，码一下
-                    self.calculate_speed_and_direction()
+                self.landmarks.append(results.multi_hand_landmarks[0])
+                # image=self.calculate_speed_and_direction(image)
+                self.calculate_speed_and_direction(image)
 
             cv2.putText(image, f"Hand Count: {num_hands}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-            cv2.imshow("Hand Tracking", image)
+            
+            out.write(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            # out.write(image)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 print("退出")
                 break
-
+        
+        print(tot)
         cap.release()
+        out.release()
         cv2.destroyAllWindows()
 
-    def calculate_speed_and_direction(self, image, hand_landmarks):
-        if self.prev_landmarks is not None:
-            curr_landmarks = hand_landmarks.landmark
+    def calculate_speed_and_direction(self, image):
+        if len(self.landmarks) > 1:
+            curr_landmarks = self.landmarks[-1].landmark
+            prev_landmarks = self.landmarks[0].landmark
 
             displacements = []
-            for prev_pt, curr_pt in zip(self.prev_landmarks, curr_landmarks):
+            for prev_pt, curr_pt in zip(prev_landmarks, curr_landmarks):
                 dx = curr_pt.x - prev_pt.x
                 dy = curr_pt.y - prev_pt.y
                 displacements.append((dx, dy))
 
             avg_dx = sum(dx for dx, _ in displacements) / len(displacements)
             avg_dy = sum(dy for _, dy in displacements) / len(displacements)
-            print(avg_dx, avg_dy)
 
             speed = (avg_dx ** 2 + avg_dy ** 2) ** 0.5
 
@@ -86,16 +98,13 @@ class HandTracker:
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.putText(image, f"Direction: {direction_text}", (10, 120),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        return image
 
-        self.prev_landmarks = hand_landmarks.landmark
-    
 
 if __name__ == "__main__":
     # 替换为你要处理的视频文件名
-    video_file = "your_video.avi"
+    video_file = "../data/test.avi"
+    result_path = "../data/result.avi"
     # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
-    hand_tracker = HandTracker(video_file)
+    hand_tracker = HandTracker(video_file,result_path,10)
     hand_tracker.start_tracking()
-
-
-
