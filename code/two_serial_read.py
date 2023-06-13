@@ -11,16 +11,12 @@ def real_time_data(tot_time,file_root,index):
     if not os.path.exists(file_root):
         os.makedirs(file_root)
     # 生成雷达数据路径
-    manager = multiprocessing.Manager()
     
-    frames = manager.list()
-    timestamps_rdframes = manager.list()
-    
-    start = time.time_ns()
+    start = time.time()
     print(start)
     # Create two processes as follows
     try:
-        radar = multiprocessing.Process(target=RAM.radar_plot, args=(frames,start, timestamps_rdframes,tot_time,file_root))
+        radar = multiprocessing.Process(target=RAM.radar_plot, args=(start,tot_time,file_root))
         video = multiprocessing.Process(target=CAMERA.get_video,args=(start,tot_time,file_root))
       
         radar.start()
@@ -31,14 +27,3 @@ def real_time_data(tot_time,file_root,index):
        
     except:
         print("Error: unable to start thread")
-
-    try:
-        # Wait for processes to finish
-        print("save radar and time data")
-        # 视频数据在函数中储存
-        np.save(file_root+'radar_frames.npy',np.array(frames))
-        np.save(file_root+'rdframe_timestamp.npy',np.array(timestamps_rdframes))
-        
-    except KeyboardInterrupt:
-        exit()
-

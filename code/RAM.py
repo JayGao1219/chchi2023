@@ -1,39 +1,11 @@
-# ===========================================================================
-# Copyright (C) 2022 Infineon Technologies AG
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of its
-#    contributors may be used to endorse or promote products derived from
-#    this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-# ===========================================================================
-
 import pprint
+import time
+import numpy as np
 
 from ifxAvian import Avian
 from internal.fft_spectrum import *
 
-import time
-
-def radar_plot(frames, starttime, timestamps, tot_time, file_root):
+def radar_plot(starttime, tot_time, file_root):
 
     # 参考之前代码中的配置
     config = Avian.DeviceConfig(
@@ -50,6 +22,8 @@ def radar_plot(frames, starttime, timestamps, tot_time, file_root):
         frame_repetition_time_s = 0.0156,   # 75.476ms, frame_Rate = 13.24Hz
     )
 
+    rdframes_data = []
+    rdframes_timestamps = []
     with Avian.Device() as device:
         device.set_config(config)
         # get metrics and print them
@@ -60,14 +34,21 @@ def radar_plot(frames, starttime, timestamps, tot_time, file_root):
             try:
                 # frame has dimension num_rx_antennas x num_samples_per_chirp x num_chirps_per_frame
                 frame = device.get_next_frame()
-                frames.append(frame)
-                timestamps.append(time.time_ns()-starttime)
-                if (time.time_ns()-starttime)/1e9 > tot_time:
+                rdframes_data.append(frame)
+                rdframes_timestamps.append(time.time()-starttime)
+                if time.time()-starttime > tot_time:
+                    print("radar time up")
                     break
+
             except:
+                print("ERROR")
                 break
 
+    print("save radar and time data")
+    np.save(file_root+'radar_frames.npy',np.array(rdframes_data))
+    np.save(file_root+'rdframe_timestamp.npy',np.array(rdframes_timestamps))
+        
     with open("%sconfig.txt"%(file_root), "w") as f:
         f.write("%s\n%s\n"%(str(config),str(metrics)))
         f.write("tot_time,runtime\n")
-        f.write("%d,%d\n"%(tot_time,time.time_ns()-starttime))
+        f.write("%d,%d\n"%(tot_time,time.time()-starttime))

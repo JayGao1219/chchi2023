@@ -22,19 +22,17 @@ def collect_data():
     gesture_index = int(input("请输入手势编号："))
     gesture_name = gestures[gesture_index]
     print(f"您选择的手势为：{gesture_name}")
-    time.sleep(2)
+    time.sleep(1.5)
 
     print("开始收集数据，请做好准备！")
     data_directory = "../data/"  # 给定的文件根目录
-
-    # 获取目录下以手势名称命名的文件夹数目
-    gesture_folders = [name for name in os.listdir(data_directory) if os.path.isdir(os.path.join(data_directory, name))]
-    num_folders = sum(name.startswith(gesture_name) for name in gesture_folders)
 
     # 创建新的文件夹名称
     new_folder_path = os.path.join(data_directory, gesture_name) + "/"
     print("新的文件夹路径为：", new_folder_path)
 
+    # 获取已有的文件夹个数
+    num_folders = len(os.listdir(new_folder_path))
     real_time_data(tot_time, new_folder_path, num_folders + 1)
 
 # 调用 collect_data() 函数开始收集数据
