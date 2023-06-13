@@ -12,7 +12,7 @@ def get_video(starttime,tot_time,file_root):
     ret = cap.set(3, width)
     ret = cap.set(4, height)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(file_root+'out.avi', fourcc, 20.0, (width, height))
+    out = cv2.VideoWriter(file_root+'out2.avi', fourcc, 20.0, (width, height))
     print('video init finish')
     timestamps = []
     while cap.isOpened():
