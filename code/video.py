@@ -3,6 +3,7 @@ import cv2
 import mediapipe as mp
 import math
 from collections import deque
+import matplotlib.pyplot as plt
 
 class HandTracker:
     def __init__(self,video_path,result_path,n_len):
@@ -11,6 +12,8 @@ class HandTracker:
         self.landmarks = deque(maxlen=n_len)
         self.result_path = result_path
         self.distance = deque(maxlen=n_len)
+        self.test = []
+        self.df = []
 
     def start_tracking(self):
         # cap = cv2.VideoCapture(0)
@@ -59,6 +62,13 @@ class HandTracker:
         cap.release()
         out.release()
         cv2.destroyAllWindows()
+        # 保存self.test
+        with open("test.txt","w") as f:
+            f.write(str(self.test))
+        
+        # 保存self.df
+        with open("df.txt","w") as f:
+            f.write(str(self.df))
 
     def calculate_speed_and_direction(self, image):
 
@@ -70,6 +80,7 @@ class HandTracker:
             distance += cur
         distance /= 4
         self.distance.append(distance)
+        self.test.append(distance)
 
         if len(self.landmarks) > 1:
             curr_landmarks = self.landmarks[-1].landmark
@@ -91,9 +102,10 @@ class HandTracker:
 
             speed = (avg_dx ** 2 + avg_dy ** 2) ** 0.5
             diff = self.distance[-1]-self.distance[0]
+            self.df.append(diff)
 
             direction_text=""
-            if abs(diff) < 0.03:
+            if abs(diff) < 0.01:
                 if abs(dx)>abs(dy) and abs(dx)>0.03:
                     if avg_dx < 0:
                         direction_text += "Left"
@@ -143,7 +155,6 @@ class HandTracker:
 
 
 if __name__ == "__main__":
-    # 替换为你要处理的视频文件名
     video_file = "../data/test.avi"
     result_path = "../data/result.avi"
     # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
