@@ -15,14 +15,13 @@ def real_time_data(tot_time,file_root,index):
     
     frames = manager.list()
     timestamps_rdframes = manager.list()
-    videoframe=manager.list()
     
     start = time.time_ns()
     print(start)
     # Create two processes as follows
     try:
-        radar = multiprocessing.Process(target=RAM.radar_plot, args=(frames,start, timestamps_rdframes,tot_time))
-        video = multiprocessing.Process(target=CAMERA.get_video,args=(videoframe,start,tot_time,file_root))
+        radar = multiprocessing.Process(target=RAM.radar_plot, args=(frames,start, timestamps_rdframes,tot_time,file_root))
+        video = multiprocessing.Process(target=CAMERA.get_video,args=(start,tot_time,file_root))
       
         radar.start()
         print('RADAR process successfully started!')

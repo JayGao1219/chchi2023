@@ -10,6 +10,7 @@ class HandTracker:
         self.video_path = video_path
         self.landmarks = deque(maxlen=n_len)
         self.result_path = result_path
+        self.distance = deque(maxlen=n_len)
 
     def start_tracking(self):
         # cap = cv2.VideoCapture(0)
@@ -42,7 +43,6 @@ class HandTracker:
                 if num_hands > 1:
                     print("检测到多只手，只跟踪第一只手")
                 self.landmarks.append(results.multi_hand_landmarks[0])
-                # image=self.calculate_speed_and_direction(image)
                 self.calculate_speed_and_direction(image)
 
             cv2.putText(image, f"Hand Count: {num_hands}", (10, 30),
@@ -61,12 +61,27 @@ class HandTracker:
         cv2.destroyAllWindows()
 
     def calculate_speed_and_direction(self, image):
+
+        # 计算节点之间的相对距离
+        curr_landmarks = self.landmarks[-1].landmark
+        distance = 0.0
+        for item in [5,9,13,17]:
+            cur = ((curr_landmarks[0].x-curr_landmarks[item].x)**2+ (curr_landmarks[0].y-curr_landmarks[item].y)**2 + (curr_landmarks[0].z-curr_landmarks[item].z)**2)**0.5
+            distance += cur
+        distance /= 4
+        self.distance.append(distance)
+
         if len(self.landmarks) > 1:
             curr_landmarks = self.landmarks[-1].landmark
             prev_landmarks = self.landmarks[0].landmark
 
             displacements = []
+            tot = 0
             for prev_pt, curr_pt in zip(prev_landmarks, curr_landmarks):
+                if tot not in [0,5,9,13,17]:
+                    tot+=1
+                    continue
+                tot+=1
                 dx = curr_pt.x - prev_pt.x
                 dy = curr_pt.y - prev_pt.y
                 displacements.append((dx, dy))
@@ -75,29 +90,55 @@ class HandTracker:
             avg_dy = sum(dy for _, dy in displacements) / len(displacements)
 
             speed = (avg_dx ** 2 + avg_dy ** 2) ** 0.5
+            diff = self.distance[-1]-self.distance[0]
 
-            angle = math.atan2(avg_dy, avg_dx)
-            angle_deg = math.degrees(angle)
-            
             direction_text=""
-            if abs(dx)>0.01 and abs(dx)>abs(dy):
-                if avg_dx < 0:
-                    direction_text += "Left"
-                elif avg_dx > 0:
-                    direction_text += "Right"
+            if abs(diff) < 0.03:
+                if abs(dx)>abs(dy) and abs(dx)>0.03:
+                    if avg_dx < 0:
+                        direction_text += "Left"
+                    elif avg_dx > 0:
+                        direction_text += "Right"
 
-            if abs(dy)>0.01 and abs(dy)>abs(dx):
-                if avg_dy < 0:
-                    direction_text += "Up"
-                elif avg_dy > 0:
-                    direction_text += "Down"
+                if abs(dy)>abs(dx) and abs(dy)>0.03:
+                    if avg_dy < 0:
+                        direction_text += "Up"
+                    elif avg_dy > 0:
+                        direction_text += "Down"
+            else:
+                if diff < 0:
+                    direction_text += "Forward"
+                else:
+                    direction_text += "Backward"
+            
+            if len(direction_text) == 0:
+                direction_text = "Stationary"
+            
+            speed_text = ""
+            if speed < 0.01:
+                speed_text = "Stationary"
+            elif speed < 0.03:
+                speed_text = "Medium"
+            else:
+                speed_text = "Fast"
 
-            cv2.putText(image, f"Speed: {speed:.2f}", (10, 60),
+            cv2.putText(image, f"Speed: {speed:.4f}", (10, 60),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image, f"dx,dy: {dx:.2f},{dy:.2f}", (10, 90),
+            cv2.putText(image, f"dx,dy: {dx:.4f},{dy:.4f}", (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.putText(image, f"Direction: {direction_text}", (10, 120),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(image,f"wrist xyz: {curr_landmarks[0].x:.3f},{curr_landmarks[0].y:.3f},{curr_landmarks[0].z:.3f}", (10,150),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(image,f"distance: {self.distance[-1]:.3f}", (10,180),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(image,f"diff distance: {self.distance[-1]-self.distance[0]:.4f}", (10,210),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(image,f"diff rate: {(self.distance[-1]-self.distance[0])/self.distance[-1]:.4f}", (10,240),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(image,f"Speed:: {speed_text}", (10,270),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
         return image
 
 
@@ -106,5 +147,5 @@ if __name__ == "__main__":
     video_file = "../data/test.avi"
     result_path = "../data/result.avi"
     # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
-    hand_tracker = HandTracker(video_file,result_path,10)
+    hand_tracker = HandTracker(video_file,result_path,3)
     hand_tracker.start_tracking()
