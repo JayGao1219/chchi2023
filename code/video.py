@@ -26,7 +26,7 @@ class HandTracker:
         }
         self.annotate.append(annotation)
 
-    def start_tracking(self)
+    def start_tracking(self):
         cap = cv2.VideoCapture(self.video_path)
         # 获取原始视频的宽度、高度和帧率
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -143,22 +143,13 @@ class HandTracker:
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.putText(image, f"Direction: {direction_text}", (10, 120),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image,f"wrist xyz: {curr_landmarks[0].x:.3f},{curr_landmarks[0].y:.3f},{curr_landmarks[0].z:.3f}", (10,150),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image,f"distance: {self.distance[-1]:.3f}", (10,180),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image,f"diff distance: {self.distance[-1]-self.distance[0]:.4f}", (10,210),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image,f"diff rate: {(self.distance[-1]-self.distance[0])/self.distance[-1]:.4f}", (10,240),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(image,f"Speed:: {speed_text}", (10,270),
+            cv2.putText(image,f"Speed:: {speed_text}", (10,150),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-        return image
 
 
 if __name__ == "__main__":
-    file_root = './data/up/1'
+    file_root = '../data/up/1/'
     # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
     hand_tracker = HandTracker(file_root,3)
     hand_tracker.start_tracking()
