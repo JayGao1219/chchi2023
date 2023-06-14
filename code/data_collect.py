@@ -30,6 +30,9 @@ def collect_data():
     # 创建新的文件夹名称
     new_folder_path = os.path.join(data_directory, gesture_name) + "/"
     print("新的文件夹路径为：", new_folder_path)
+    
+    if not os.path.exists(new_folder_path):
+        os.makedirs(new_folder_path)
 
     # 获取已有的文件夹个数
     num_folders = len(os.listdir(new_folder_path))
