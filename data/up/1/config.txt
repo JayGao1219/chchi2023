@@ -26,4 +26,4 @@ DeviceMetrics:
     frame_repetition_time_s: 0.015599999576807022
     center_frequency_Hz: 60500000768.0
 tot_time,runtime
-10,10
+30,30

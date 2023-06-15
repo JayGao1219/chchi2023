@@ -6,6 +6,7 @@ from collections import deque
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+import os
 
 class HandTracker:
     def __init__(self,root,n_len):
@@ -146,10 +147,18 @@ class HandTracker:
             cv2.putText(image,f"Speed:: {speed_text}", (10,150),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-
+def precess_videos():
+    file_root = '../data/'
+    actions = ['up', 'down', 'left', 'right', 'clockwise', 'anticlockwise']
+    for action in actions:
+        folder_path = file_root + action + '/'
+        # 获取文件夹下文件夹的数目
+        num = len(os.listdir(folder_path))
+        for i in range(1, num+1):
+            hand_tracker = HandTracker(folder_path+str(i)+'/',3)
+            hand_tracker.start_tracking()
 
 if __name__ == "__main__":
-    file_root = '../data/up/1/'
-    # Instantiate the HandTracker class and call the start_tracking() method to begin tracking
-    hand_tracker = HandTracker(file_root,3)
-    hand_tracker.start_tracking()
+    precess_videos()
+    # hand_tracker = HandTracker('../data/anticlockwise/1',3)
+    # hand_tracker.start_tracking()
